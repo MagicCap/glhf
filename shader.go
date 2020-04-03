@@ -114,7 +114,7 @@ func NewShader(vertexFmt, uniformFmt AttrFormat, vertexShader, fragmentShader st
 }
 
 func (s *Shader) delete() {
-	mainthread.ExecMainThread(func() {
+	go mainthread.ExecMainThread(func() {
 		gl.DeleteProgram(s.program.obj)
 	})
 }
