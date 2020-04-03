@@ -4,9 +4,9 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/faiface/mainthread"
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/magiccap/MagicCap/core/mainthread"
 )
 
 // Shader is an OpenGL shader program.
@@ -114,7 +114,7 @@ func NewShader(vertexFmt, uniformFmt AttrFormat, vertexShader, fragmentShader st
 }
 
 func (s *Shader) delete() {
-	mainthread.CallNonBlock(func() {
+	mainthread.ExecMainThread(func() {
 		gl.DeleteProgram(s.program.obj)
 	})
 }

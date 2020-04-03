@@ -3,8 +3,8 @@ package glhf
 import (
 	"runtime"
 
-	"github.com/faiface/mainthread"
 	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/magiccap/MagicCap/core/mainthread"
 )
 
 // Frame is a fixed resolution texture that you can draw on.
@@ -49,7 +49,7 @@ func NewFrame(width, height int, smooth bool) *Frame {
 }
 
 func (f *Frame) delete() {
-	mainthread.CallNonBlock(func() {
+	go mainthread.ExecMainThread(func() {
 		gl.DeleteFramebuffers(1, &f.fb.obj)
 	})
 }

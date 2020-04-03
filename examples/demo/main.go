@@ -7,8 +7,8 @@ import (
 	"os"
 
 	"github.com/faiface/glhf"
-	"github.com/faiface/mainthread"
 	"github.com/go-gl/glfw/v3.1/glfw"
+	"github.com/magiccap/MagicCap/core/mainthread"
 )
 
 func loadImage(path string) (*image.NRGBA, error) {
@@ -30,12 +30,12 @@ func run() {
 	var win *glfw.Window
 
 	defer func() {
-		mainthread.Call(func() {
+		mainthread.ExecMainThread(func() {
 			glfw.Terminate()
 		})
 	}()
 
-	mainthread.Call(func() {
+	mainthread.ExecMainThread(func() {
 		glfw.Init()
 
 		glfw.WindowHint(glfw.ContextVersionMajor, 3)
@@ -81,7 +81,7 @@ func run() {
 	}
 
 	// Every OpenGL call needs to be done inside the main thread.
-	mainthread.Call(func() {
+	mainthread.ExecMainThread(func() {
 		var err error
 
 		// Here we create a shader. The second argument is the format of the uniform
@@ -132,7 +132,7 @@ func run() {
 
 	shouldQuit := false
 	for !shouldQuit {
-		mainthread.Call(func() {
+		mainthread.ExecMainThread(func() {
 			if win.ShouldClose() {
 				shouldQuit = true
 			}
@@ -157,7 +157,8 @@ func run() {
 }
 
 func main() {
-	mainthread.Run(run)
+	//mainthread.Run(run)
+	// TODO: MagicCap initialisation.
 }
 
 var vertexShader = `

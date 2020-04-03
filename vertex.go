@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"runtime"
 
-	"github.com/faiface/mainthread"
 	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/magiccap/MagicCap/core/mainthread"
 	"github.com/pkg/errors"
 )
 
@@ -246,7 +246,7 @@ func newVertexArray(shader *Shader, cap int) *vertexArray {
 }
 
 func (va *vertexArray) delete() {
-	mainthread.CallNonBlock(func() {
+	go mainthread.ExecMainThread(func() {
 		gl.DeleteVertexArrays(1, &va.vao.obj)
 		gl.DeleteBuffers(1, &va.vbo.obj)
 	})

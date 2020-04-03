@@ -3,9 +3,9 @@ package glhf
 import (
 	"runtime"
 
-	"github.com/faiface/mainthread"
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
+	"github.com/magiccap/MagicCap/core/mainthread"
 )
 
 // Texture is an OpenGL texture.
@@ -60,7 +60,7 @@ func NewTexture(width, height int, smooth bool, pixels []uint8) *Texture {
 }
 
 func (t *Texture) delete() {
-	mainthread.CallNonBlock(func() {
+	go mainthread.ExecMainThread(func() {
 		gl.DeleteTextures(1, &t.tex.obj)
 	})
 }
