@@ -1,11 +1,11 @@
 package glhf
 
 import (
+	"github.com/magiccap/MagicCap/core/mainthread"
 	"runtime"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/magiccap/MagicCap/core/mainthread"
 )
 
 // Texture is an OpenGL texture.
@@ -13,6 +13,7 @@ type Texture struct {
 	tex           binder
 	width, height int
 	smooth        bool
+	deleted       bool
 }
 
 // NewTexture creates a new texture with the specified width and height with some initial
@@ -60,28 +61,47 @@ func NewTexture(width, height int, smooth bool, pixels []uint8) *Texture {
 }
 
 func (t *Texture) delete() {
-	go mainthread.ExecMainThread(func() {
-		gl.DeleteTextures(1, &t.tex.obj)
-	})
+	if !t.deleted {
+		go mainthread.ExecMainThread(func() {
+			gl.DeleteTextures(1, &t.tex.obj)
+		})
+		t.deleted = true
+	}
+}
+
+func (t *Texture) checkDeleted() {
+	if t.deleted {
+		panic("texture was already deleted")
+	}
+}
+
+// Delete is used to manually delete a texture.
+func (t *Texture) Delete() {
+	t.checkDeleted()
+	t.delete()
 }
 
 // ID returns the OpenGL ID of this Texture.
 func (t *Texture) ID() uint32 {
+	t.checkDeleted()
 	return t.tex.obj
 }
 
 // Width returns the width of the Texture in pixels.
 func (t *Texture) Width() int {
+	t.checkDeleted()
 	return t.width
 }
 
 // Height returns the height of the Texture in pixels.
 func (t *Texture) Height() int {
+	t.checkDeleted()
 	return t.height
 }
 
 // SetPixels sets the content of a sub-region of the Texture. Pixels must be an RGBA byte sequence.
 func (t *Texture) SetPixels(x, y, w, h int, pixels []uint8) {
+	t.checkDeleted()
 	if len(pixels) != w*h*4 {
 		panic("set pixels: wrong number of pixels")
 	}
@@ -100,6 +120,7 @@ func (t *Texture) SetPixels(x, y, w, h int, pixels []uint8) {
 
 // Pixels returns the content of a sub-region of the Texture as an RGBA byte sequence.
 func (t *Texture) Pixels(x, y, w, h int) []uint8 {
+	t.checkDeleted()
 	pixels := make([]uint8, t.width*t.height*4)
 	gl.GetTexImage(
 		gl.TEXTURE_2D,
@@ -122,6 +143,7 @@ func (t *Texture) Pixels(x, y, w, h int) []uint8 {
 // It affects how the Texture is drawn when zoomed. Smooth interpolates between the neighbour
 // pixels, while pixely always chooses the nearest pixel.
 func (t *Texture) SetSmooth(smooth bool) {
+	t.checkDeleted()
 	t.smooth = smooth
 	if smooth {
 		gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
@@ -134,15 +156,18 @@ func (t *Texture) SetSmooth(smooth bool) {
 
 // Smooth returns whether the Texture is set to be drawn "smooth" or "pixely".
 func (t *Texture) Smooth() bool {
+	t.checkDeleted()
 	return t.smooth
 }
 
 // Begin binds the Texture. This is necessary before using the Texture.
 func (t *Texture) Begin() {
+	t.checkDeleted()
 	t.tex.bind()
 }
 
 // End unbinds the Texture and restores the previous one.
 func (t *Texture) End() {
+	t.checkDeleted()
 	t.tex.restore()
 }

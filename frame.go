@@ -1,16 +1,17 @@
 package glhf
 
 import (
+	"github.com/magiccap/MagicCap/core/mainthread"
 	"runtime"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
-	"github.com/magiccap/MagicCap/core/mainthread"
 )
 
 // Frame is a fixed resolution texture that you can draw on.
 type Frame struct {
 	fb, rf, df binder // framebuffer, read framebuffer, draw framebuffer
 	tex        *Texture
+	deleted    bool
 }
 
 // NewFrame creates a new fully transparent Frame with given dimensions in pixels.
@@ -49,23 +50,41 @@ func NewFrame(width, height int, smooth bool) *Frame {
 }
 
 func (f *Frame) delete() {
-	go mainthread.ExecMainThread(func() {
-		gl.DeleteFramebuffers(1, &f.fb.obj)
-	})
+	if !f.deleted {
+		go mainthread.ExecMainThread(func() {
+			gl.DeleteFramebuffers(1, &f.fb.obj)
+		})
+		f.deleted = true
+	}
+}
+
+func (f *Frame) checkDeleted() {
+	if f.deleted {
+		panic("frame was already deleted")
+	}
+}
+
+// Delete is used to manually delete a frame.
+func (f *Frame) Delete() {
+	f.checkDeleted()
+	f.delete()
 }
 
 // ID returns the OpenGL framebuffer ID of this Frame.
 func (f *Frame) ID() uint32 {
+	f.checkDeleted()
 	return f.fb.obj
 }
 
 // Begin binds the Frame. All draw operations will target this Frame until End is called.
 func (f *Frame) Begin() {
+	f.checkDeleted()
 	f.fb.bind()
 }
 
 // End unbinds the Frame. All draw operations will go to whatever was bound before this Frame.
 func (f *Frame) End() {
+	f.checkDeleted()
 	f.fb.restore()
 }
 
@@ -78,6 +97,7 @@ func (f *Frame) End() {
 // rectangle. The stretch will be either smooth or pixely according to the source Frame's
 // smoothness.
 func (f *Frame) Blit(dst *Frame, sx0, sy0, sx1, sy1, dx0, dy0, dx1, dy1 int) {
+	f.checkDeleted()
 	f.rf.obj = f.fb.obj
 	if dst != nil {
 		f.df.obj = dst.fb.obj
@@ -104,5 +124,6 @@ func (f *Frame) Blit(dst *Frame, sx0, sy0, sx1, sy1, dx0, dy0, dx1, dy1 int) {
 
 // Texture returns the Frame's underlying Texture that the Frame draws on.
 func (f *Frame) Texture() *Texture {
+	f.checkDeleted()
 	return f.tex
 }

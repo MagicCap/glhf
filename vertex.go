@@ -45,6 +45,12 @@ func (vs *VertexSlice) VertexFormat() AttrFormat {
 	return vs.va.format
 }
 
+// Delete is used to manually delete a texture.
+func (vs *VertexSlice) Delete() {
+	vs.va.checkDeleted()
+	vs.va.delete()
+}
+
 // Stride returns the number of float32 elements occupied by one vertex.
 func (vs *VertexSlice) Stride() int {
 	return vs.va.stride / 4
@@ -162,6 +168,7 @@ type vertexArray struct {
 	stride   int
 	offset   []int
 	shader   *Shader
+	deleted  bool
 }
 
 const vertexArrayMinCap = 4
@@ -245,28 +252,41 @@ func newVertexArray(shader *Shader, cap int) *vertexArray {
 	return va
 }
 
+func (va *vertexArray) checkDeleted() {
+	if va.deleted {
+		panic("vertex array was already deleted")
+	}
+}
+
 func (va *vertexArray) delete() {
-	go mainthread.ExecMainThread(func() {
-		gl.DeleteVertexArrays(1, &va.vao.obj)
-		gl.DeleteBuffers(1, &va.vbo.obj)
-	})
+	if !va.deleted {
+		go mainthread.ExecMainThread(func() {
+			gl.DeleteVertexArrays(1, &va.vao.obj)
+			gl.DeleteBuffers(1, &va.vbo.obj)
+		})
+		va.deleted = true
+	}
 }
 
 func (va *vertexArray) begin() {
+	va.checkDeleted()
 	va.vao.bind()
 	va.vbo.bind()
 }
 
 func (va *vertexArray) end() {
+	va.checkDeleted()
 	va.vbo.restore()
 	va.vao.restore()
 }
 
 func (va *vertexArray) draw(i, j int) {
+	va.checkDeleted()
 	gl.DrawArrays(gl.TRIANGLES, int32(i), int32(j-i))
 }
 
 func (va *vertexArray) setVertexData(i, j int, data []float32) {
+	va.checkDeleted()
 	if j-i == 0 {
 		// avoid setting 0 bytes of buffer data
 		return
@@ -275,6 +295,7 @@ func (va *vertexArray) setVertexData(i, j int, data []float32) {
 }
 
 func (va *vertexArray) vertexData(i, j int) []float32 {
+	va.checkDeleted()
 	if j-i == 0 {
 		// avoid getting 0 bytes of buffer data
 		return nil

@@ -15,6 +15,7 @@ type Shader struct {
 	vertexFmt  AttrFormat
 	uniformFmt AttrFormat
 	uniformLoc []int32
+	deleted    bool
 }
 
 // NewShader creates a new shader program from the specified vertex shader and fragment shader
@@ -114,23 +115,41 @@ func NewShader(vertexFmt, uniformFmt AttrFormat, vertexShader, fragmentShader st
 }
 
 func (s *Shader) delete() {
-	go mainthread.ExecMainThread(func() {
-		gl.DeleteProgram(s.program.obj)
-	})
+	if !s.deleted {
+		go mainthread.ExecMainThread(func() {
+			gl.DeleteProgram(s.program.obj)
+		})
+		s.deleted = true
+	}
+}
+
+// Delete is used to manually delete a shader.
+func (s *Shader) Delete() {
+	s.checkDeleted()
+	s.delete()
+}
+
+func (s *Shader) checkDeleted() {
+	if s.deleted {
+		panic("shader was already deleted")
+	}
 }
 
 // ID returns the OpenGL ID of this Shader.
 func (s *Shader) ID() uint32 {
+	s.checkDeleted()
 	return s.program.obj
 }
 
 // VertexFormat returns the vertex attribute format of this Shader. Do not change it.
 func (s *Shader) VertexFormat() AttrFormat {
+	s.checkDeleted()
 	return s.vertexFmt
 }
 
 // UniformFormat returns the uniform attribute format of this Shader. Do not change it.
 func (s *Shader) UniformFormat() AttrFormat {
+	s.checkDeleted()
 	return s.uniformFmt
 }
 
@@ -159,6 +178,8 @@ func (s *Shader) UniformFormat() AttrFormat {
 //
 // The Shader must be bound before calling this method.
 func (s *Shader) SetUniformAttr(uniform int, value interface{}) (ok bool) {
+	s.checkDeleted()
+
 	if s.uniformLoc[uniform] < 0 {
 		return false
 	}
@@ -215,10 +236,12 @@ func (s *Shader) SetUniformAttr(uniform int, value interface{}) (ok bool) {
 
 // Begin binds the Shader program. This is necessary before using the Shader.
 func (s *Shader) Begin() {
+	s.checkDeleted()
 	s.program.bind()
 }
 
 // End unbinds the Shader program and restores the previous one.
 func (s *Shader) End() {
+	s.checkDeleted()
 	s.program.restore()
 }
