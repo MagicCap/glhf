@@ -1,7 +1,7 @@
 package glhf
 
 import (
-	"github.com/magiccap/MagicCap/cshared/mainthread"
+	"github.com/magiccap/MagicCap/mainthread"
 	"runtime"
 
 	"github.com/go-gl/gl/v3.3-core/gl"

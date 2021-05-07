@@ -5,7 +5,7 @@ import (
 	"runtime"
 
 	"github.com/go-gl/gl/v3.3-core/gl"
-	"github.com/magiccap/MagicCap/cshared/mainthread"
+	"github.com/magiccap/MagicCap/mainthread"
 	"github.com/pkg/errors"
 )
 
