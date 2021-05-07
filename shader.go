@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-gl/gl/v3.3-core/gl"
 	"github.com/go-gl/mathgl/mgl32"
-	"github.com/magiccap/MagicCap/core/mainthread"
+	"github.com/magiccap/MagicCap/cshared/mainthread"
 )
 
 // Shader is an OpenGL shader program.
